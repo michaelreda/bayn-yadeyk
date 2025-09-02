@@ -7,6 +7,7 @@
     <title>بين يديك</title>
     <!-- Use Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -74,6 +75,13 @@
                 <p id="users9PlusCountSpan" class="text-4xl font-bold text-purple-800 mt-2">0</p>
             </div>
         </div>
+        
+        <h2 class="text-2xl font-semibold text-gray-700 mt-6 mb-4">Attendance Distribution</h2>
+        <div class="bg-white rounded-lg p-6 shadow-md">
+            <canvas id="attendanceChart"></canvas>
+        </div>
+
+        <hr class="my-6">
 
         <div class="mb-6 flex flex-col sm:flex-row gap-4">
             <input type="text" id="nameFilter" placeholder="Filter by name..."
@@ -130,8 +138,10 @@
         const users9PlusCountSpan = document.getElementById('users9PlusCountSpan');
         const loadingMessage = document.getElementById('loading');
         const messageBox = document.getElementById('messageBox');
+        const attendanceChartCanvas = document.getElementById('attendanceChart');
 
         let allData = [];
+        let attendanceChart;
 
         async function fetchData() {
             try {
@@ -269,6 +279,64 @@
                 users9PlusCountSpan.textContent = year2Users9PlusCount;
             }
         }
+        
+        function renderChart(data) {
+            const attendanceValues = data.map(item => item.attendance);
+            const maxAttendance = Math.max(...attendanceValues, 0);
+
+            const labels = [];
+            const chartData = [];
+            for (let i = 1; i <= maxAttendance; i++) {
+                labels.push(`${i}+`);
+                const count = attendanceValues.filter(a => a >= i).length;
+                chartData.push(count);
+            }
+
+            const chartConfig = {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Users',
+                        data: chartData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Users'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Attendance'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            };
+
+            if (attendanceChart) {
+                attendanceChart.data = chartConfig.data;
+                attendanceChart.options = chartConfig.options;
+                attendanceChart.update();
+            } else {
+                attendanceChart = new Chart(attendanceChartCanvas, chartConfig);
+            }
+        }
 
         function filterData() {
             const nameQuery = nameFilter.value.toLowerCase();
@@ -284,6 +352,7 @@
             filteredData.sort((a, b) => b.attendance - a.attendance);
 
             renderTable(filteredData);
+            renderChart(filteredData);
         }
 
         (async () => {
