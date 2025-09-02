@@ -63,14 +63,14 @@
                 <p class="text-xl font-medium text-blue-600">Average Attendance</p>
                 <p id="medianAttendanceSpan" class="text-4xl font-bold text-blue-800 mt-2">0</p>
             </div>
-            <!-- Users with >= 7 Attendance Card -->
+            <!-- Year 3 with 7+ Attendance Card -->
             <div class="bg-green-50 p-6 rounded-xl shadow-sm text-center">
-                <p class="text-xl font-medium text-green-600">7+ Attendance</p>
+                <p class="text-xl font-medium text-green-600">Year 3 (7+ Attendance)</p>
                 <p id="usersCountSpan" class="text-4xl font-bold text-green-800 mt-2">0</p>
             </div>
-            <!-- Users with >= 9 Attendance Card -->
+            <!-- Year 2 with 9+ Attendance Card -->
             <div class="bg-purple-50 p-6 rounded-xl shadow-sm text-center">
-                <p class="text-xl font-medium text-purple-600">9+ Attendance</p>
+                <p class="text-xl font-medium text-purple-600">Year 2 (9+ Attendance)</p>
                 <p id="users9PlusCountSpan" class="text-4xl font-bold text-purple-800 mt-2">0</p>
             </div>
         </div>
@@ -223,8 +223,8 @@
 
         function renderTable(data) {
             dataTableBody.innerHTML = '';
-            let usersCount = 0;
-            let users9PlusCount = 0;
+            let year3Users7PlusCount = 0;
+            let year2Users9PlusCount = 0;
             let attendanceValues = [];
 
             if (data.length === 0) {
@@ -247,11 +247,11 @@
                     dataTableBody.appendChild(row);
 
                     attendanceValues.push(item.attendance);
-                    if (item.attendance >= 7) {
-                        usersCount++;
+                    if (item.year === '3' && item.attendance >= 7) {
+                        year3Users7PlusCount++;
                     }
-                    if (item.attendance >= 9) {
-                        users9PlusCount++;
+                    if (item.year === '2' && item.attendance >= 9) {
+                        year2Users9PlusCount++;
                     }
                 });
 
@@ -265,8 +265,8 @@
                 }
 
                 medianAttendanceSpan.textContent = median;
-                usersCountSpan.textContent = usersCount;
-                users9PlusCountSpan.textContent = users9PlusCount;
+                usersCountSpan.textContent = year3Users7PlusCount;
+                users9PlusCountSpan.textContent = year2Users9PlusCount;
             }
         }
 
