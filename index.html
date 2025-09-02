@@ -174,6 +174,7 @@
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Name</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Attendance</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Tickets</th>
+                        <th class="py-2 px-4 sm:py-4 sm:px-6">T-shirt Size</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Class</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Year</th>
                     </tr>
@@ -290,7 +291,8 @@
                 return attendanceData.map(item => ({
                     ...item,
                     year: yearMap.get(item.class) || 'N/A',
-                    tickets: ticketsCountMap.get(item.name) ?? 0 // Ensure tickets is a number
+                    tickets: ticketsCountMap.get(item.name),
+                    tshirtSize: tshirtSizesMap.get(item.name)
                 }));
 
             } catch (error) {
@@ -363,7 +365,7 @@
                     const payerName = columns[nameIndex]?.trim();
                     if (payerName) {
                         const ticketsArray = ticketDetails.get(payerName) || [];
-                        const tshirtSize = columns[tshirtIndex]?.trim() || 'N/A';
+                        const tshirtSize = columns[tshirtIndex]?.trim() || '';
                         tshirtSizes.set(payerName, tshirtSize);
 
                         // For first ticket
@@ -415,7 +417,9 @@
             const tshirtSizeCounts = {};
             for (let size of tshirtSizesMap.values()) {
                 const cleanedSize = size.toUpperCase().replace(/\s/g, ''); // Normalize size string
-                tshirtSizeCounts[cleanedSize] = (tshirtSizeCounts[cleanedSize] || 0) + 1;
+                if (cleanedSize) {
+                  tshirtSizeCounts[cleanedSize] = (tshirtSizeCounts[cleanedSize] || 0) + 1;
+                }
             }
 
             const tshirtSizeCountsElement = document.getElementById('tshirtSizeCounts');
@@ -442,7 +446,7 @@
 
             if (data.length === 0) {
                 const row = document.createElement('tr');
-                row.innerHTML = `<td colspan="5" class="text-center py-4 text-gray-500">No results found.</td>`;
+                row.innerHTML = `<td colspan="6" class="text-center py-4 text-gray-500">No results found.</td>`;
                 dataTableBody.appendChild(row);
                 medianAttendanceSpan.textContent = 0;
                 usersCountSpan.textContent = 0;
@@ -456,12 +460,19 @@
                     // Add conditional class for highlighting
                     if (isQualified) {
                         row.classList.add('highlight-row');
-                        qualifiedTicketsCount += item.tickets;
+                        qualifiedTicketsCount += (item.tickets || 0);
                     }
+                    
+                    let ticketsCellContent = '';
+                    if (item.tshirtSize && !item.tickets) {
+                        ticketsCellContent = '0';
+                    } else if (item.tickets > 0) {
+                        ticketsCellContent = `<span class="cursor-pointer text-blue-500 hover:underline" onclick="showTicketDetails('${item.name}')">${item.tickets}</span>`;
+                    }
+                    
+                    const tshirtSizeCellContent = item.tshirtSize || '';
 
-                    const ticketsCellContent = item.tickets > 0 ? `<span class="cursor-pointer text-blue-500 hover:underline" onclick="showTicketDetails('${item.name}')">${item.tickets}</span>` : item.tickets;
-
-                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
+                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
                     dataTableBody.appendChild(row);
 
                     attendanceValues.push(item.attendance);
