@@ -35,8 +35,14 @@
             font-weight: 600;
         }
 
+        /* This is the class for the alternating rows */
         .data-table tbody tr:nth-child(even) {
             background-color: #f9fafb;
+        }
+
+        /* This is the new highlight class with !important to override other styles */
+        .data-table tbody tr.highlight-row {
+            background-color: #d1fae5 !important;
         }
 
         .data-table tbody tr:hover {
@@ -51,7 +57,7 @@
         <h1 class="text-4xl font-bold text-center text-gray-800 mb-6">بين يديك</h1>
 
         <!-- Insights Cards Section -->
-        <div class="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <!-- Average Attendance Card -->
             <div class="bg-blue-50 p-6 rounded-xl shadow-sm text-center">
                 <p class="text-xl font-medium text-blue-600">Average Attendance</p>
@@ -62,6 +68,11 @@
                 <p class="text-xl font-medium text-green-600">7+ Attendance</p>
                 <p id="usersCountSpan" class="text-4xl font-bold text-green-800 mt-2">0</p>
             </div>
+            <!-- Users with >= 9 Attendance Card -->
+            <div class="bg-purple-50 p-6 rounded-xl shadow-sm text-center">
+                <p class="text-xl font-medium text-purple-600">9+ Attendance</p>
+                <p id="users9PlusCountSpan" class="text-4xl font-bold text-purple-800 mt-2">0</p>
+            </div>
         </div>
 
         <div class="mb-6 flex flex-col sm:flex-row gap-4">
@@ -70,6 +81,10 @@
             <select id="classFilter"
                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300">
                 <option value="">All Classes</option>
+            </select>
+            <select id="yearFilter"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300">
+                <option value="">All Years</option>
             </select>
         </div>
 
@@ -82,6 +97,7 @@
                         <th class="py-4 px-6">Name</th>
                         <th class="py-4 px-6">Attendance</th>
                         <th class="py-4 px-6">Class</th>
+                        <th class="py-4 px-6">Year</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -103,12 +119,15 @@
 
     <script>
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT89z1IxfYApHDNFqHwQPdwJ4AoHntrQd7rFljQHLMS3lrdK5Pwc0_SwjDMpK0f2WRk_eG649t70iCw/pub?gid=1579885639&single=true&output=csv';
+        const yearUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT89z1IxfYApHDNFqHwQPdwJ4AoHntrQd7rFljQHLMS3lrdK5Pwc0_SwjDMpK0f2WRk_eG649t70iCw/pub?gid=510477616&single=true&output=csv';
 
         const dataTableBody = document.querySelector('#dataTable tbody');
         const nameFilter = document.getElementById('nameFilter');
         const classFilter = document.getElementById('classFilter');
+        const yearFilter = document.getElementById('yearFilter');
         const medianAttendanceSpan = document.getElementById('medianAttendanceSpan');
         const usersCountSpan = document.getElementById('usersCountSpan');
+        const users9PlusCountSpan = document.getElementById('users9PlusCountSpan');
         const loadingMessage = document.getElementById('loading');
         const messageBox = document.getElementById('messageBox');
 
@@ -116,26 +135,40 @@
 
         async function fetchData() {
             try {
-                const response = await fetch(sheetUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                const [attendanceResponse, yearResponse] = await Promise.all([
+                    fetch(sheetUrl),
+                    fetch(yearUrl)
+                ]);
+
+                if (!attendanceResponse.ok || !yearResponse.ok) {
+                    throw new Error("HTTP error!");
                 }
-                const csvData = await response.text();
-                return parseCSV(csvData);
+
+                const attendanceCsv = await attendanceResponse.text();
+                const yearCsv = await yearResponse.text();
+
+                const attendanceData = parseAttendanceCSV(attendanceCsv);
+                const yearMap = parseYearCSV(yearCsv);
+
+                // Merge data
+                return attendanceData.map(item => ({
+                    ...item,
+                    year: yearMap.get(item.class) || 'N/A'
+                }));
+
             } catch (error) {
                 console.error("Error fetching data:", error);
                 loadingMessage.classList.add('hidden');
-                messageBox.textContent = "Could not fetch data. Please check the URL or try again later.";
+                messageBox.textContent = "Could not fetch data. Please check the URLs or try again later.";
                 messageBox.classList.remove('hidden');
                 return [];
             }
         }
 
-        function parseCSV(csvText) {
+        function parseAttendanceCSV(csvText) {
             const rows = csvText.trim().split('\n').map(row => row.split(','));
             const data = rows.slice(1).map(row => {
                 if (row.length >= 3) {
-                    // Check if the class name starts with the specified prefix and merge it
                     let className = row[2].trim();
                     if (className.startsWith('القيسبة')) {
                         className = 'القيسبة';
@@ -151,9 +184,24 @@
             return data;
         }
 
+        function parseYearCSV(csvText) {
+            const yearMap = new Map();
+            const rows = csvText.trim().split('\n').map(row => row.split(','));
+            rows.slice(1).forEach(row => {
+                if (row.length >= 2) {
+                    let className = row[0].trim();
+                    if (className.startsWith('القيسبة')) {
+                        className = 'القيسبة';
+                    }
+                    yearMap.set(className, row[1].trim());
+                }
+            });
+            return yearMap;
+        }
+
         function populateClassDropdown(data) {
             const uniqueClasses = [...new Set(data.map(item => item.class))];
-            uniqueClasses.sort(); // Sort classes alphabetically
+            uniqueClasses.sort();
             uniqueClasses.forEach(className => {
                 const option = document.createElement('option');
                 option.value = className;
@@ -162,72 +210,92 @@
             });
         }
 
+        function populateYearDropdown(data) {
+            const uniqueYears = [...new Set(data.map(item => item.year))];
+            uniqueYears.sort();
+            uniqueYears.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearFilter.appendChild(option);
+            });
+        }
+
         function renderTable(data) {
             dataTableBody.innerHTML = '';
             let usersCount = 0;
+            let users9PlusCount = 0;
             let attendanceValues = [];
 
             if (data.length === 0) {
                 const row = document.createElement('tr');
-                row.innerHTML = `<td colspan="3" class="text-center py-4 text-gray-500">No results found.</td>`;
+                row.innerHTML = `<td colspan="4" class="text-center py-4 text-gray-500">No results found.</td>`;
                 dataTableBody.appendChild(row);
                 medianAttendanceSpan.textContent = 0;
                 usersCountSpan.textContent = 0;
+                users9PlusCountSpan.textContent = 0;
             } else {
                 data.forEach(item => {
                     const row = document.createElement('tr');
-                    row.innerHTML = `<td class="py-4 px-6">${item.name}</td><td class="py-4 px-6">${item.attendance}</td><td class="py-4 px-6">${item.class}</td>`;
+                    
+                    // Add conditional class for highlighting
+                    if ((item.year === '2' && item.attendance >= 9) || (item.year === '3' && item.attendance >= 7)) {
+                        row.classList.add('highlight-row');
+                    }
+
+                    row.innerHTML = `<td class="py-4 px-6">${item.name}</td><td class="py-4 px-6">${item.attendance}</td><td class="py-4 px-6">${item.class}</td><td class="py-4 px-6">${item.year}</td>`;
                     dataTableBody.appendChild(row);
 
-                    // Collect attendance values and count users with >= 7 attendance
                     attendanceValues.push(item.attendance);
                     if (item.attendance >= 7) {
                         usersCount++;
                     }
+                    if (item.attendance >= 9) {
+                        users9PlusCount++;
+                    }
                 });
 
-                // Calculate the median
                 const sortedValues = attendanceValues.sort((a, b) => a - b);
                 const middle = Math.floor(sortedValues.length / 2);
                 let median;
                 if (sortedValues.length % 2 === 0) {
-                    // Even number of elements, take the average of the two middle ones
                     median = (sortedValues[middle - 1] + sortedValues[middle]) / 2;
                 } else {
-                    // Odd number of elements
                     median = sortedValues[middle];
                 }
 
-                // Display the calculated values in their respective cards
                 medianAttendanceSpan.textContent = median;
                 usersCountSpan.textContent = usersCount;
+                users9PlusCountSpan.textContent = users9PlusCount;
             }
         }
 
         function filterData() {
             const nameQuery = nameFilter.value.toLowerCase();
             const classQuery = classFilter.value.toLowerCase();
+            const yearQuery = yearFilter.value.toLowerCase();
 
             let filteredData = allData.filter(item =>
                 item.name.toLowerCase().includes(nameQuery) &&
-                (classQuery === '' || item.class.toLowerCase() === classQuery)
+                (classQuery === '' || item.class.toLowerCase() === classQuery) &&
+                (yearQuery === '' || item.year.toLowerCase() === yearQuery)
             );
 
-            // Sort by attendance in descending order
             filteredData.sort((a, b) => b.attendance - a.attendance);
 
             renderTable(filteredData);
         }
 
-        // Initial fetch and render
         (async () => {
             allData = await fetchData();
             loadingMessage.classList.add('hidden');
             populateClassDropdown(allData);
+            populateYearDropdown(allData);
             filterData();
 
             nameFilter.addEventListener('input', filterData);
             classFilter.addEventListener('change', filterData);
+            yearFilter.addEventListener('change', filterData);
         })();
     </script>
 
