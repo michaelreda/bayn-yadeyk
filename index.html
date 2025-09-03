@@ -425,7 +425,11 @@
             const tshirtSizeCountsElement = document.getElementById('tshirtSizeCounts');
             tshirtSizeCountsElement.innerHTML = ''; // Clear previous content
 
-            const sortedSizes = Object.keys(tshirtSizeCounts).sort();
+            // Define custom sort order for sizes
+            const sizeOrder = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+            const sortedSizes = Object.keys(tshirtSizeCounts).sort((a, b) => {
+                return sizeOrder.indexOf(a) - sizeOrder.indexOf(b);
+            });
 
             sortedSizes.forEach(size => {
                 const count = tshirtSizeCounts[size];
