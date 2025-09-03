@@ -223,9 +223,8 @@
         let totalTicketsCount = 0;
         let attendanceChart;
 
-        function showTicketDetails(name, className) {
-            const key = name + '_' + className;
-            const details = ticketsDetailsMap.get(key) || [];
+        function showTicketDetails(name) {
+            const details = ticketsDetailsMap.get(name) || [];
             ticketDetailsList.innerHTML = '';
 
             if (details.length === 0) {
@@ -282,22 +281,19 @@
                 totalTicketsCount = 0;
                 // Create a count map from the detailed map and calculate total tickets
                 const ticketsCountMap = new Map();
-                for (let [key, details] of ticketsDetailsMap.entries()) {
+                for (let [name, details] of ticketsDetailsMap.entries()) {
                     const count = details.length;
-                    ticketsCountMap.set(key, count);
+                    ticketsCountMap.set(name, count);
                     totalTicketsCount += count;
                 }
 
                 // Merge all data
-                return attendanceData.map(item => {
-                    const key = item.name + '_' + item.class;
-                    return {
-                        ...item,
-                        year: yearMap.get(item.class) || 'N/A',
-                        tickets: ticketsCountMap.get(key),
-                        tshirtSize: tshirtSizesMap.get(key)
-                    };
-                });
+                return attendanceData.map(item => ({
+                    ...item,
+                    year: yearMap.get(item.class) || 'N/A',
+                    tickets: ticketsCountMap.get(item.name),
+                    tshirtSize: tshirtSizesMap.get(item.name)
+                }));
 
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -353,7 +349,6 @@
 
             const headers = rows[0].split(',').map(h => h.trim());
             const nameIndex = headers.indexOf('اسمك ايه');
-            const classIndex = headers.indexOf('class');
             const tshirtIndex = headers.indexOf('T-shirt size (100 L.E)');
 
             const ticketName1Index = headers.indexOf('اسم صاحب التذكرة ثلاثى بالعربى');
@@ -366,15 +361,12 @@
 
             rows.slice(1).forEach(row => {
                 const columns = row.split(',');
-                if (nameIndex !== -1 && classIndex !== -1) {
+                if (nameIndex !== -1) {
                     const payerName = columns[nameIndex]?.trim();
-                    const payerClass = columns[classIndex]?.trim();
-                    const key = payerName + '_' + payerClass;
-
-                    if (payerName && payerClass) {
-                        const ticketsArray = ticketDetails.get(key) || [];
+                    if (payerName) {
+                        const ticketsArray = ticketDetails.get(payerName) || [];
                         const tshirtSize = columns[tshirtIndex]?.trim() || '';
-                        tshirtSizes.set(key, tshirtSize);
+                        tshirtSizes.set(payerName, tshirtSize);
 
                         // For first ticket
                         if (columns[ticketName1Index]?.trim()) {
@@ -392,7 +384,7 @@
                                 relation: columns[ticketRelation2Index]?.trim() || 'N/A'
                             });
                         }
-                        ticketDetails.set(key, ticketsArray);
+                        ticketDetails.set(payerName, ticketsArray);
                     }
                 }
             });
@@ -421,12 +413,12 @@
             });
         }
 
-        function renderTshirtCard(data) {
+        function renderTshirtCard() {
             const tshirtSizeCounts = {};
-            for (const item of data) {
-                if (item.tshirtSize) {
-                    const cleanedSize = item.tshirtSize.toUpperCase().replace(/\s/g, ''); // Normalize size string
-                    tshirtSizeCounts[cleanedSize] = (tshirtSizeCounts[cleanedSize] || 0) + 1;
+            for (let size of tshirtSizesMap.values()) {
+                const cleanedSize = size.toUpperCase().replace(/\s/g, ''); // Normalize size string
+                if (cleanedSize) {
+                  tshirtSizeCounts[cleanedSize] = (tshirtSizeCounts[cleanedSize] || 0) + 1;
                 }
             }
 
@@ -479,7 +471,7 @@
                     if (item.tshirtSize && !item.tickets) {
                         ticketsCellContent = '0';
                     } else if (item.tickets > 0) {
-                        ticketsCellContent = `<span class="cursor-pointer text-blue-500 hover:underline" onclick="showTicketDetails('${item.name}', '${item.class}')">${item.tickets}</span>`;
+                        ticketsCellContent = `<span class="cursor-pointer text-blue-500 hover:underline" onclick="showTicketDetails('${item.name}')">${item.tickets}</span>`;
                     }
                     
                     const tshirtSizeCellContent = item.tshirtSize || '';
@@ -585,7 +577,6 @@
 
             renderTable(filteredData);
             renderChart(filteredData);
-            renderTshirtCard(filteredData); // Pass the filtered data to the t-shirt card function
         }
 
         (async () => {
@@ -595,7 +586,8 @@
             populateYearDropdown(allData);
             totalTicketsCountSpan.textContent = totalTicketsCount;
             filterData();
-            
+            renderTshirtCard();
+
             nameFilter.addEventListener('input', filterData);
             classFilter.addEventListener('change', filterData);
             yearFilter.addEventListener('change', filterData);
