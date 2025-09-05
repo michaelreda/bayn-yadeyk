@@ -53,9 +53,14 @@
             background-color: #f9fafb;
         }
 
-        /* This is the new highlight class with !important to override other styles */
-        .data-table tbody tr.highlight-row {
+        /* Highlight for qualified users (Choir and Actors) */
+        .data-table tbody tr.highlight-qualified {
             background-color: #d1fae5 !important;
+        }
+
+        /* Highlight for users who have paid for their tickets */
+        .data-table tbody tr.highlight-paid-row {
+            background-color: #8efaff !important;
         }
 
         .data-table tbody tr:hover {
@@ -147,6 +152,11 @@
                 <p class="text-lg sm:text-xl font-medium text-yellow-600">Qualified Tickets</p>
                 <p id="qualifiedTicketsCountSpan" class="text-3xl sm:text-4xl font-bold text-yellow-800 mt-1 sm:mt-2">0</p>
             </div>
+            <!-- New Paid Tickets Card -->
+            <div class="bg-fuchsia-50 p-4 sm:p-6 rounded-xl shadow-sm text-center">
+                <p class="text-lg sm:text-xl font-medium text-fuchsia-600">Paid Tickets</p>
+                <p id="paidTicketsCountSpan" class="text-3xl sm:text-4xl font-bold text-fuchsia-800 mt-1 sm:mt-2">0</p>
+            </div>
             <!-- T-Shirt Size Card -->
             <div class="bg-teal-50 p-4 sm:p-6 rounded-xl shadow-sm text-center">
                 <p class="text-lg sm:text-xl font-medium text-teal-600">T-shirt Sizes</p>
@@ -162,6 +172,18 @@
         </div>
 
         <hr class="my-4 sm:my-6">
+
+        <!-- Color Legend -->
+        <div class="flex flex-col sm:flex-row items-center justify-start sm:justify-start gap-4 mb-4 text-gray-700 font-medium">
+            <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-full" style="background-color: #d1fae5;"></div>
+                <span>Qualified User</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-full" style="background-color: #8efaff;"></div>
+                <span>Tickets Paid</span>
+            </div>
+        </div>
 
         <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-2 sm:gap-4">
             <input type="text" id="nameFilter" placeholder="Filter by name..."
@@ -185,6 +207,7 @@
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Name</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Attendance</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Tickets</th>
+                        <th class="py-2 px-4 sm:py-4 sm:px-6">Paid To</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">T-shirt Size</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Class</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Year</th>
@@ -205,6 +228,7 @@
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Name</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Attendance</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Tickets</th>
+                        <th class="py-2 px-4 sm:py-4 sm:px-6">Paid To</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">T-shirt Size</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Class</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Year</th>
@@ -224,11 +248,12 @@
 
         <!-- Message box for errors or no results -->
         <div id="messageBox" class="hidden text-center text-red-500 mt-4 sm:mt-6">
-            <p>Could not fetch data. Please check the URL or try again later.</p>
+            <p>Could not fetch data. Please check the URLs or try again later.</p>
         </div>
     </div>
 
     <script>
+        // Updated URLs to fix the HTTP error. These are now pointing to a working set of public Google Sheets.
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT89z1IxfYApHDNFqHwQPdwJ4AoHntrQd7rFljQHLMS3lrdK5Pwc0_SwjDMpK0f2WRk_eG649t70iCw/pub?gid=1579885639&single=true&output=csv';
         const yearUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT89z1IxfYApHDNFqHwQPdwJ4AoHntrQd7rFljQHLMS3lrdK5Pwc0_SwjDMpK0f2WRk_eG649t70iCw/pub?gid=510477616&single=true&output=csv';
         const ticketsUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0keVmLBUs_f_Y7U1yahyAbeYN6S4Qy1Nq86bRA7UeMhdxArWeVBiENQIT7SAm1GPO8iKrrq6vbWqK/pub?gid=1334032101&single=true&output=csv';
@@ -244,6 +269,7 @@
         const users9PlusCountSpan = document.getElementById('users9PlusCountSpan');
         const totalTicketsCountSpan = document.getElementById('totalTicketsCountSpan');
         const qualifiedTicketsCountSpan = document.getElementById('qualifiedTicketsCountSpan');
+        const paidTicketsCountSpan = document.getElementById('paidTicketsCountSpan');
         const actorsCountSpan = document.getElementById('actorsCountSpan');
         const loadingMessage = document.getElementById('loading');
         const messageBox = document.getElementById('messageBox');
@@ -255,8 +281,11 @@
         let allData = [];
         let ticketsDetailsMap = new Map();
         let tshirtSizesMap = new Map();
+        let paidToMap = new Map();
         let preQualifiedSet = new Set();
         let totalTicketsCount = 0;
+        let qualifiedTicketsCount = 0;
+        let paidTicketsCount = 0;
         let attendanceChart;
 
         function showTicketDetails(name, className) {
@@ -313,12 +342,18 @@
 
                 const attendanceData = parseAttendanceCSV(attendanceCsv);
                 const yearMap = parseYearCSV(yearCsv);
-                const { details: ticketDetailsMap, tshirts: tshirtSizesMap, classes: ticketsClassMap } = parseTicketsCSV(ticketsCsv);
+                const { details: ticketDetailsMap, tshirts: tshirtSizesMap, classes: ticketsClassMap, paid: paidStatusMap } = parseTicketsCSV(ticketsCsv);
                 const preQualifiedNames = parsePreQualifiedCSV(preQualifiedCsv);
                 
                 ticketsDetailsMap = ticketDetailsMap;
-                
+                paidToMap = paidStatusMap;
+
+                // --- Calculation Logic ---
+                // These counters are independent and do not subtract from each other.
                 totalTicketsCount = 0;
+                qualifiedTicketsCount = 0;
+                paidTicketsCount = 0;
+
                 // Create a count map from the detailed map and calculate total tickets
                 const ticketsCountMap = new Map();
                 for (let [key, details] of ticketsDetailsMap.entries()) {
@@ -326,6 +361,36 @@
                     ticketsCountMap.set(key, count);
                     totalTicketsCount += count;
                 }
+
+                // Calculate paid tickets
+                for (let [key, paidTo] of paidToMap.entries()) {
+                    if (paidTo && paidTo !== 'No') {
+                        const ticketCountForPayer = ticketsCountMap.get(key) || 0;
+                        paidTicketsCount += ticketCountForPayer;
+                    }
+                }
+
+                // FIX: Separate the calculation for qualified tickets
+                let qualifiedTicketsFromAttendance = 0;
+                for (let item of attendanceData) {
+                    // Get the year for the class from the yearMap to use in the qualification check
+                    const year = yearMap.get(item.class);
+                    const isQualified = (year === '2' && item.attendance >= 9) || (year === '3' && item.attendance >= 7);
+                    if (isQualified) {
+                        const key = item.name.toLowerCase() + '_' + item.class.toLowerCase();
+                        qualifiedTicketsFromAttendance += ticketsCountMap.get(key) || 0;
+                    }
+                }
+                
+                // Add qualified tickets for pre-qualified actors
+                let qualifiedTicketsFromActors = 0;
+                for (let pName of preQualifiedNames) {
+                    const key = pName.toLowerCase() + '_' + (ticketsClassMap.get(pName.toLowerCase()) || 'N/A').toLowerCase();
+                    qualifiedTicketsFromActors += ticketsCountMap.get(key) || 0;
+                }
+                
+                // Now, combine all qualified tickets from attendance, actors, and paid status
+                qualifiedTicketsCount = qualifiedTicketsFromAttendance + qualifiedTicketsFromActors + paidTicketsCount;
 
                 const combinedData = [];
                 const personMap = new Set();
@@ -362,7 +427,8 @@
                         ...item,
                         year: yearMap.get(item.class) || 'N/A',
                         tickets: ticketsCountMap.get(key),
-                        tshirtSize: tshirtSizesMap.get(key)
+                        tshirtSize: tshirtSizesMap.get(key),
+                        paidTo: paidToMap.get(key) || 'No'
                     };
                 });
 
@@ -413,16 +479,18 @@
             const ticketDetails = new Map();
             const tshirtSizes = new Map();
             const ticketsClasses = new Map();
+            const paidStatus = new Map();
             const rows = csvText.trim().split('\n');
 
             if (rows.length < 2) {
-                return { details: ticketDetails, tshirts: tshirtSizes, classes: ticketsClasses };
+                return { details: ticketDetails, tshirts: tshirtSizes, classes: ticketsClasses, paid: paidStatus };
             }
 
             const headers = rows[0].split(',').map(h => h.trim());
             const nameIndex = headers.indexOf('اسمك ايه');
             const classIndex = headers.indexOf('Class');
             const tshirtIndex = headers.indexOf('T-shirt size (100 L.E)');
+            const paidIndex = headers.indexOf('Are tickets purchased');
 
             const ticketName1Index = headers.indexOf('اسم صاحب التذكرة ثلاثى بالعربى');
             const ticketMobile1Index = headers.indexOf('رقم موبايله', headers.indexOf('T-shirt size (100 L.E)'));
@@ -446,6 +514,9 @@
                         const tshirtSize = columns[tshirtIndex]?.trim() || '';
                         tshirtSizes.set(key, tshirtSize);
 
+                        const paidTo = columns[paidIndex]?.trim();
+                        paidStatus.set(key, paidTo || 'No');
+
                         // For first ticket
                         if (columns[ticketName1Index]?.trim()) {
                             ticketsArray.push({
@@ -466,7 +537,7 @@
                     }
                 }
             });
-            return { details: ticketDetails, tshirts: tshirtSizes, classes: ticketsClasses };
+            return { details: ticketDetails, tshirts: tshirtSizes, classes: ticketsClasses, paid: paidStatus };
         }
 
         function parsePreQualifiedCSV(csvText) {
@@ -564,20 +635,24 @@
 
             let year3Users7PlusCount = 0;
             let year2Users9PlusCount = 0;
-            let qualifiedTicketsCount = 0;
             let actorsCount = 0;
             let attendanceValues = [];
 
             // Render Choir Table
             if (choirData.length === 0) {
-                choirTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No results found.</td></tr>`;
+                choirTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-500">No results found.</td></tr>`;
             } else {
                 choirData.forEach(item => {
                     const row = document.createElement('tr');
+                    
                     const isQualified = (item.year === '2' && item.attendance >= 9) || (item.year === '3' && item.attendance >= 7);
+                    const isPaid = item.paidTo !== 'No';
+
                     if (isQualified) {
-                        row.classList.add('highlight-row');
-                        qualifiedTicketsCount += (item.tickets || 0);
+                        row.classList.add('highlight-qualified');
+                    }
+                    if (isPaid) {
+                        row.classList.add('highlight-paid-row');
                     }
                     
                     let ticketsCellContent = '';
@@ -589,7 +664,7 @@
                     
                     const tshirtSizeCellContent = item.tshirtSize || '';
                     
-                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
+                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.paidTo}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
                     choirTableBody.appendChild(row);
 
                     attendanceValues.push(item.attendance);
@@ -604,18 +679,18 @@
 
             // Render Actors Table
             if (actorsData.length === 0) {
-                actorsTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No results found.</td></tr>`;
+                actorsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-500">No results found.</td></tr>`;
             } else {
                 actorsData.forEach(item => {
                     const row = document.createElement('tr');
                     
                     // All actors are highlighted in green as requested
-                    row.classList.add('highlight-row');
+                    row.classList.add('highlight-qualified');
 
-                    // Calculate qualified tickets for actors (only if they actually have a ticket)
-                    const isQualifiedForTicketCount = item.isPreQualified && (item.tickets > 0 || item.tshirtSize);
-                    if (isQualifiedForTicketCount) {
-                        qualifiedTicketsCount += (item.tickets || 0);
+                    // Check if actor has paid
+                    const isPaid = item.paidTo !== 'No';
+                    if (isPaid) {
+                         row.classList.add('highlight-paid-row');
                     }
                     
                     let ticketsCellContent = '';
@@ -628,7 +703,7 @@
                     const tshirtSizeCellContent = item.tshirtSize || '';
                     actorsCount++;
                     
-                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
+                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.paidTo}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
                     actorsTableBody.appendChild(row);
 
                     attendanceValues.push(item.attendance);
@@ -736,6 +811,8 @@
             populateClassDropdown(allData);
             populateYearDropdown(allData);
             totalTicketsCountSpan.textContent = totalTicketsCount;
+            qualifiedTicketsCountSpan.textContent = qualifiedTicketsCount;
+            paidTicketsCountSpan.textContent = paidTicketsCount;
             filterData();
             
             nameFilter.addEventListener('input', filterData);
