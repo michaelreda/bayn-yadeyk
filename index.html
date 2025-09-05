@@ -351,7 +351,6 @@
                 // --- Calculation Logic ---
                 // These counters are independent and do not subtract from each other.
                 totalTicketsCount = 0;
-                qualifiedTicketsCount = 0;
                 paidTicketsCount = 0;
 
                 // Create a count map from the detailed map and calculate total tickets
@@ -370,27 +369,30 @@
                     }
                 }
 
-                // FIX: Separate the calculation for qualified tickets
-                let qualifiedTicketsFromAttendance = 0;
+                // Fix: Calculate qualified tickets without double counting paid people who are also qualified by attendance.
+                let qualifiedPeopleSet = new Set();
+                
+                // Add people qualified by attendance
                 for (let item of attendanceData) {
-                    // Get the year for the class from the yearMap to use in the qualification check
                     const year = yearMap.get(item.class);
-                    const isQualified = (year === '2' && item.attendance >= 9) || (year === '3' && item.attendance >= 7);
-                    if (isQualified) {
+                    if ((year === '2' && item.attendance >= 9) || (year === '3' && item.attendance >= 7)) {
                         const key = item.name.toLowerCase() + '_' + item.class.toLowerCase();
-                        qualifiedTicketsFromAttendance += ticketsCountMap.get(key) || 0;
+                        qualifiedPeopleSet.add(key);
                     }
                 }
                 
-                // Add qualified tickets for pre-qualified actors
-                let qualifiedTicketsFromActors = 0;
+                // Add pre-qualified actors
                 for (let pName of preQualifiedNames) {
-                    const key = pName.toLowerCase() + '_' + (ticketsClassMap.get(pName.toLowerCase()) || 'N/A').toLowerCase();
-                    qualifiedTicketsFromActors += ticketsCountMap.get(key) || 0;
+                    const classNameFromTickets = ticketsClassMap.get(pName.toLowerCase()) || 'N/A';
+                    const key = pName.toLowerCase() + '_' + classNameFromTickets.toLowerCase();
+                    qualifiedPeopleSet.add(key);
                 }
-                
-                // Now, combine all qualified tickets from attendance, actors, and paid status
-                qualifiedTicketsCount = qualifiedTicketsFromAttendance + qualifiedTicketsFromActors + paidTicketsCount;
+
+                // Sum up tickets for all unique qualified people
+                qualifiedTicketsCount = 0;
+                qualifiedPeopleSet.forEach(key => {
+                    qualifiedTicketsCount += ticketsCountMap.get(key) || 0;
+                });
 
                 const combinedData = [];
                 const personMap = new Set();
@@ -664,7 +666,10 @@
                     
                     const tshirtSizeCellContent = item.tshirtSize || '';
                     
-                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.paidTo}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
+                    // Conditionally set paidTo content to be empty if it's "No"
+                    const paidToContent = item.paidTo === 'No' ? '' : item.paidTo;
+                    
+                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${paidToContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
                     choirTableBody.appendChild(row);
 
                     attendanceValues.push(item.attendance);
@@ -703,7 +708,10 @@
                     const tshirtSizeCellContent = item.tshirtSize || '';
                     actorsCount++;
                     
-                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.paidTo}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
+                    // Conditionally set paidTo content to be empty if it's "No"
+                    const paidToContent = item.paidTo === 'No' ? '' : item.paidTo;
+
+                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${paidToContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
                     actorsTableBody.appendChild(row);
 
                     attendanceValues.push(item.attendance);
