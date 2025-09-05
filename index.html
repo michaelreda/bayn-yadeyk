@@ -109,8 +109,9 @@
     <div class="container mx-auto p-4 sm:p-6 bg-white rounded-xl shadow-lg">
         <h1 class="text-4xl font-bold text-center text-gray-800 mb-4 sm:mb-6">بين يديك</h1>
 
-        <!-- Insights Cards Section -->
-        <div class="mb-4 sm:mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-4">
+        <!-- Attendance Section -->
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-2 sm:mb-4">Attendance</h2>
+        <div class="mb-4 sm:mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
             <!-- Average Attendance Card -->
             <div class="bg-blue-50 p-4 sm:p-6 rounded-xl shadow-sm text-center">
                 <p class="text-lg sm:text-xl font-medium text-blue-600">Average Attendance</p>
@@ -126,6 +127,16 @@
                 <p class="text-lg sm:text-xl font-medium text-purple-600">Year 2 (9+ Attendance)</p>
                 <p id="users9PlusCountSpan" class="text-3xl sm:text-4xl font-bold text-purple-800 mt-1 sm:mt-2">0</p>
             </div>
+            <!-- Actors Count Card -->
+            <div class="bg-orange-50 p-4 sm:p-6 rounded-xl shadow-sm text-center">
+                <p class="text-lg sm:text-xl font-medium text-orange-600">Actors Count</p>
+                <p id="actorsCountSpan" class="text-3xl sm:text-4xl font-bold text-orange-800 mt-1 sm:mt-2">0</p>
+            </div>
+        </div>
+
+        <!-- Tickets & T-shirts Section -->
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mt-4 sm:mt-6 mb-2 sm:mb-4">Tickets & T-shirts</h2>
+        <div class="mb-4 sm:mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
             <!-- Total Tickets Card -->
             <div class="bg-indigo-50 p-4 sm:p-6 rounded-xl shadow-sm text-center">
                 <p class="text-lg sm:text-xl font-medium text-indigo-600">Total Tickets</p>
@@ -165,10 +176,10 @@
             </select>
         </div>
 
-        <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-2 sm:mb-4">Attendance Data</h2>
-
-        <div class="bg-white rounded-lg overflow-hidden shadow-md overflow-x-auto">
-            <table id="dataTable" class="data-table w-full text-xs sm:text-sm">
+        <!-- Choir Table Section -->
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-2 sm:mb-4">Choir Data</h2>
+        <div class="bg-white rounded-lg overflow-hidden shadow-md overflow-x-auto mb-6">
+            <table id="choirTable" class="data-table w-full text-xs sm:text-sm">
                 <thead>
                     <tr>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Name</th>
@@ -180,10 +191,31 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Table data will be inserted here -->
+                    <!-- Choir data will be inserted here -->
                 </tbody>
             </table>
         </div>
+
+        <!-- Actors Table Section -->
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-2 sm:mb-4">Actors Data</h2>
+        <div class="bg-white rounded-lg overflow-hidden shadow-md overflow-x-auto">
+            <table id="actorsTable" class="data-table w-full text-xs sm:text-sm">
+                <thead>
+                    <tr>
+                        <th class="py-2 px-4 sm:py-4 sm:px-6">Name</th>
+                        <th class="py-2 px-4 sm:py-4 sm:px-6">Attendance</th>
+                        <th class="py-2 px-4 sm:py-4 sm:px-6">Tickets</th>
+                        <th class="py-2 px-4 sm:py-4 sm:px-6">T-shirt Size</th>
+                        <th class="py-2 px-4 sm:py-4 sm:px-6">Class</th>
+                        <th class="py-2 px-4 sm:py-4 sm:px-6">Year</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Actors data will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+
 
         <!-- Loading state -->
         <div id="loading" class="text-center text-gray-500 mt-4 sm:mt-6">
@@ -200,8 +232,10 @@
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT89z1IxfYApHDNFqHwQPdwJ4AoHntrQd7rFljQHLMS3lrdK5Pwc0_SwjDMpK0f2WRk_eG649t70iCw/pub?gid=1579885639&single=true&output=csv';
         const yearUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT89z1IxfYApHDNFqHwQPdwJ4AoHntrQd7rFljQHLMS3lrdK5Pwc0_SwjDMpK0f2WRk_eG649t70iCw/pub?gid=510477616&single=true&output=csv';
         const ticketsUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0keVmLBUs_f_Y7U1yahyAbeYN6S4Qy1Nq86bRA7UeMhdxArWeVBiENQIT7SAm1GPO8iKrrq6vbWqK/pub?gid=1334032101&single=true&output=csv';
+        const preQualifiedUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0keVmLBUs_f_Y7U1yahyAbeYN6S4Qy1Nq86bRA7UeMhdxArWeVBiENQIT7SAm1GPO8iKrrq6vbWqK/pub?gid=1215052094&single=true&output=csv';
 
-        const dataTableBody = document.querySelector('#dataTable tbody');
+        const choirTableBody = document.querySelector('#choirTable tbody');
+        const actorsTableBody = document.querySelector('#actorsTable tbody');
         const nameFilter = document.getElementById('nameFilter');
         const classFilter = document.getElementById('classFilter');
         const yearFilter = document.getElementById('yearFilter');
@@ -210,6 +244,7 @@
         const users9PlusCountSpan = document.getElementById('users9PlusCountSpan');
         const totalTicketsCountSpan = document.getElementById('totalTicketsCountSpan');
         const qualifiedTicketsCountSpan = document.getElementById('qualifiedTicketsCountSpan');
+        const actorsCountSpan = document.getElementById('actorsCountSpan');
         const loadingMessage = document.getElementById('loading');
         const messageBox = document.getElementById('messageBox');
         const attendanceChartCanvas = document.getElementById('attendanceChart');
@@ -220,11 +255,12 @@
         let allData = [];
         let ticketsDetailsMap = new Map();
         let tshirtSizesMap = new Map();
+        let preQualifiedSet = new Set();
         let totalTicketsCount = 0;
         let attendanceChart;
 
         function showTicketDetails(name, className) {
-            const key = name + '_' + className;
+            const key = name.toLowerCase() + '_' + className.toLowerCase();
             const details = ticketsDetailsMap.get(key) || [];
             ticketDetailsList.innerHTML = '';
 
@@ -259,26 +295,29 @@
 
         async function fetchData() {
             try {
-                const [attendanceResponse, yearResponse, ticketsResponse] = await Promise.all([
+                const [attendanceResponse, yearResponse, ticketsResponse, preQualifiedResponse] = await Promise.all([
                     fetch(sheetUrl),
                     fetch(yearUrl),
-                    fetch(ticketsUrl)
+                    fetch(ticketsUrl),
+                    fetch(preQualifiedUrl)
                 ]);
 
-                if (!attendanceResponse.ok || !yearResponse.ok || !ticketsResponse.ok) {
+                if (!attendanceResponse.ok || !yearResponse.ok || !ticketsResponse.ok || !preQualifiedResponse.ok) {
                     throw new Error("HTTP error!");
                 }
 
                 const attendanceCsv = await attendanceResponse.text();
                 const yearCsv = await yearResponse.text();
                 const ticketsCsv = await ticketsResponse.text();
+                const preQualifiedCsv = await preQualifiedResponse.text();
 
                 const attendanceData = parseAttendanceCSV(attendanceCsv);
                 const yearMap = parseYearCSV(yearCsv);
-                const parsedTickets = parseTicketsCSV(ticketsCsv);
-                ticketsDetailsMap = parsedTickets.details;
-                tshirtSizesMap = parsedTickets.tshirts;
-
+                const { details: ticketDetailsMap, tshirts: tshirtSizesMap, classes: ticketsClassMap } = parseTicketsCSV(ticketsCsv);
+                const preQualifiedNames = parsePreQualifiedCSV(preQualifiedCsv);
+                
+                ticketsDetailsMap = ticketDetailsMap;
+                
                 totalTicketsCount = 0;
                 // Create a count map from the detailed map and calculate total tickets
                 const ticketsCountMap = new Map();
@@ -288,9 +327,37 @@
                     totalTicketsCount += count;
                 }
 
-                // Merge all data
-                return attendanceData.map(item => {
-                    const key = item.name + '_' + item.class;
+                const combinedData = [];
+                const personMap = new Set();
+
+                // First, add all attendees from the attendance sheet
+                attendanceData.forEach(item => {
+                    const key = item.name.toLowerCase();
+                    if (!personMap.has(key)) {
+                        combinedData.push({ ...item, isPreQualified: preQualifiedNames.has(key) });
+                        personMap.add(key);
+                    }
+                });
+
+                // Then, add pre-qualified actors not in the attendance sheet
+                preQualifiedNames.forEach(pName => {
+                    const key = pName.toLowerCase();
+                    if (!personMap.has(key)) {
+                         // Check if class exists in tickets sheet
+                        const classNameFromTickets = ticketsClassMap.get(key) || 'N/A';
+                        combinedData.push({
+                            name: pName,
+                            attendance: 0,
+                            class: classNameFromTickets,
+                            isPreQualified: true
+                        });
+                        personMap.add(key);
+                    }
+                });
+
+                // Now, enrich the combined data with year, tickets, and t-shirt info
+                return combinedData.map(item => {
+                    const key = item.name.toLowerCase() + '_' + item.class.toLowerCase();
                     return {
                         ...item,
                         year: yearMap.get(item.class) || 'N/A',
@@ -345,15 +412,16 @@
         function parseTicketsCSV(csvText) {
             const ticketDetails = new Map();
             const tshirtSizes = new Map();
+            const ticketsClasses = new Map();
             const rows = csvText.trim().split('\n');
 
             if (rows.length < 2) {
-                return { details: ticketDetails, tshirts: tshirtSizes };
+                return { details: ticketDetails, tshirts: tshirtSizes, classes: ticketsClasses };
             }
 
             const headers = rows[0].split(',').map(h => h.trim());
             const nameIndex = headers.indexOf('اسمك ايه');
-            const classIndex = headers.indexOf('class');
+            const classIndex = headers.indexOf('Class');
             const tshirtIndex = headers.indexOf('T-shirt size (100 L.E)');
 
             const ticketName1Index = headers.indexOf('اسم صاحب التذكرة ثلاثى بالعربى');
@@ -369,9 +437,11 @@
                 if (nameIndex !== -1 && classIndex !== -1) {
                     const payerName = columns[nameIndex]?.trim();
                     const payerClass = columns[classIndex]?.trim();
-                    const key = payerName + '_' + payerClass;
-
+                    
                     if (payerName && payerClass) {
+                        ticketsClasses.set(payerName.toLowerCase(), payerClass);
+                        const key = payerName.toLowerCase() + '_' + payerClass.toLowerCase();
+                        
                         const ticketsArray = ticketDetails.get(key) || [];
                         const tshirtSize = columns[tshirtIndex]?.trim() || '';
                         tshirtSizes.set(key, tshirtSize);
@@ -396,12 +466,38 @@
                     }
                 }
             });
-            return { details: ticketDetails, tshirts: tshirtSizes };
+            return { details: ticketDetails, tshirts: tshirtSizes, classes: ticketsClasses };
+        }
+
+        function parsePreQualifiedCSV(csvText) {
+            const preQualifiedSet = new Set();
+            const rows = csvText.trim().split('\n').map(row => row.split(','));
+
+            if (rows.length < 2) {
+                return preQualifiedSet;
+            }
+
+            const headers = rows[0].map(h => h.trim());
+            const nameIndex = headers.indexOf('Name');
+
+            if (nameIndex === -1) {
+                return preQualifiedSet;
+            }
+
+            rows.slice(1).forEach(row => {
+                const name = row[nameIndex]?.trim();
+                if (name) {
+                    preQualifiedSet.add(name.toLowerCase());
+                }
+            });
+
+            return preQualifiedSet;
         }
 
         function populateClassDropdown(data) {
             const uniqueClasses = [...new Set(data.map(item => item.class))];
             uniqueClasses.sort();
+            classFilter.innerHTML = `<option value="">All Classes</option>`;
             uniqueClasses.forEach(className => {
                 const option = document.createElement('option');
                 option.value = className;
@@ -413,6 +509,7 @@
         function populateYearDropdown(data) {
             const uniqueYears = [...new Set(data.map(item => item.year))];
             uniqueYears.sort();
+            yearFilter.innerHTML = `<option value="">All Years</option>`;
             uniqueYears.forEach(year => {
                 const option = document.createElement('option');
                 option.value = year;
@@ -450,26 +547,34 @@
         }
 
         function renderTable(data) {
-            dataTableBody.innerHTML = '';
+            choirTableBody.innerHTML = '';
+            actorsTableBody.innerHTML = '';
+            
+            let choirData = [];
+            let actorsData = [];
+
+            // Separate data into choir and actors
+            data.forEach(item => {
+                if (item.isPreQualified) {
+                    actorsData.push(item);
+                } else {
+                    choirData.push(item);
+                }
+            });
+
             let year3Users7PlusCount = 0;
             let year2Users9PlusCount = 0;
             let qualifiedTicketsCount = 0;
+            let actorsCount = 0;
             let attendanceValues = [];
 
-            if (data.length === 0) {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td colspan="6" class="text-center py-4 text-gray-500">No results found.</td>`;
-                dataTableBody.appendChild(row);
-                medianAttendanceSpan.textContent = 0;
-                usersCountSpan.textContent = 0;
-                users9PlusCountSpan.textContent = 0;
-                qualifiedTicketsCountSpan.textContent = 0;
+            // Render Choir Table
+            if (choirData.length === 0) {
+                choirTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No results found.</td></tr>`;
             } else {
-                data.forEach(item => {
+                choirData.forEach(item => {
                     const row = document.createElement('tr');
                     const isQualified = (item.year === '2' && item.attendance >= 9) || (item.year === '3' && item.attendance >= 7);
-
-                    // Add conditional class for highlighting
                     if (isQualified) {
                         row.classList.add('highlight-row');
                         qualifiedTicketsCount += (item.tickets || 0);
@@ -483,9 +588,9 @@
                     }
                     
                     const tshirtSizeCellContent = item.tshirtSize || '';
-
+                    
                     row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
-                    dataTableBody.appendChild(row);
+                    choirTableBody.appendChild(row);
 
                     attendanceValues.push(item.attendance);
                     if (item.year === '3' && item.attendance >= 7) {
@@ -495,21 +600,58 @@
                         year2Users9PlusCount++;
                     }
                 });
-
-                const sortedValues = attendanceValues.sort((a, b) => a - b);
-                const middle = Math.floor(sortedValues.length / 2);
-                let median;
-                if (sortedValues.length % 2 === 0) {
-                    median = (sortedValues[middle - 1] + sortedValues[middle]) / 2;
-                } else {
-                    median = sortedValues[middle];
-                }
-
-                medianAttendanceSpan.textContent = median;
-                usersCountSpan.textContent = year3Users7PlusCount;
-                users9PlusCountSpan.textContent = year2Users9PlusCount;
-                qualifiedTicketsCountSpan.textContent = qualifiedTicketsCount;
             }
+
+            // Render Actors Table
+            if (actorsData.length === 0) {
+                actorsTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No results found.</td></tr>`;
+            } else {
+                actorsData.forEach(item => {
+                    const row = document.createElement('tr');
+                    
+                    // All actors are highlighted in green as requested
+                    row.classList.add('highlight-row');
+
+                    // Calculate qualified tickets for actors (only if they actually have a ticket)
+                    const isQualifiedForTicketCount = item.isPreQualified && (item.tickets > 0 || item.tshirtSize);
+                    if (isQualifiedForTicketCount) {
+                        qualifiedTicketsCount += (item.tickets || 0);
+                    }
+                    
+                    let ticketsCellContent = '';
+                    if (item.tshirtSize && !item.tickets) {
+                        ticketsCellContent = '0';
+                    } else if (item.tickets > 0) {
+                        ticketsCellContent = `<span class="cursor-pointer text-blue-500 hover:underline" onclick="showTicketDetails('${item.name}', '${item.class}')">${item.tickets}</span>`;
+                    }
+
+                    const tshirtSizeCellContent = item.tshirtSize || '';
+                    actorsCount++;
+                    
+                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
+                    actorsTableBody.appendChild(row);
+
+                    attendanceValues.push(item.attendance);
+                });
+            }
+
+            // Update stats based on the full filtered data
+            const sortedValues = data.map(item => item.attendance).sort((a, b) => a - b);
+            const middle = Math.floor(sortedValues.length / 2);
+            let median;
+            if (sortedValues.length % 2 === 0 && sortedValues.length > 0) {
+                median = (sortedValues[middle - 1] + sortedValues[middle]) / 2;
+            } else if (sortedValues.length > 0) {
+                median = sortedValues[middle];
+            } else {
+                median = 0;
+            }
+
+            medianAttendanceSpan.textContent = median;
+            usersCountSpan.textContent = year3Users7PlusCount;
+            users9PlusCountSpan.textContent = year2Users9PlusCount;
+            qualifiedTicketsCountSpan.textContent = qualifiedTicketsCount;
+            actorsCountSpan.textContent = actorsCount;
         }
 
         function renderChart(data) {
