@@ -66,6 +66,11 @@
         .data-table tbody tr:hover {
             background-color: #e5e7eb;
         }
+        
+        /* Highlight for selected rows */
+        .data-table tbody tr.selected-row {
+            background-color: #c7d2fe !important; /* A light purple color */
+        }
 
         .modal-overlay {
             position: fixed;
@@ -183,6 +188,10 @@
                 <div class="w-5 h-5 rounded-full" style="background-color: #8efaff;"></div>
                 <span>Tickets Paid</span>
             </div>
+            <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-full" style="background-color: #c7d2fe;"></div>
+                <span>Selected</span>
+            </div>
         </div>
 
         <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-2 sm:gap-4">
@@ -197,6 +206,17 @@
                 <option value="">All Years</option>
             </select>
         </div>
+        
+        <!-- WhatsApp Button Container -->
+        <div id="whatsappButtonContainer" class="flex justify-center mb-4 sm:mb-6" style="display: none;">
+            <button onclick="sendWhatsAppMessage()"
+                class="px-6 py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
+                </svg>
+                Send to WhatsApp
+            </button>
+        </div>
 
         <!-- Choir Table Section -->
         <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-2 sm:mb-4">Choir Data</h2>
@@ -204,6 +224,7 @@
             <table id="choirTable" class="data-table w-full text-xs sm:text-sm">
                 <thead>
                     <tr>
+                        <th class="py-2 px-4 sm:py-4 sm:px-6"></th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Name</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Attendance</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Tickets</th>
@@ -225,6 +246,7 @@
             <table id="actorsTable" class="data-table w-full text-xs sm:text-sm">
                 <thead>
                     <tr>
+                        <th class="py-2 px-4 sm:py-4 sm:px-6"></th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Name</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Attendance</th>
                         <th class="py-2 px-4 sm:py-4 sm:px-6">Tickets</th>
@@ -274,6 +296,7 @@
         const loadingMessage = document.getElementById('loading');
         const messageBox = document.getElementById('messageBox');
         const attendanceChartCanvas = document.getElementById('attendanceChart');
+        const whatsappButtonContainer = document.getElementById('whatsappButtonContainer');
 
         const ticketModal = document.getElementById('ticketModal');
         const ticketDetailsList = document.getElementById('ticketDetailsList');
@@ -287,6 +310,7 @@
         let qualifiedTicketsCount = 0;
         let paidTicketsCount = 0;
         let attendanceChart;
+        let selectedNamesSet = new Set();
 
         function showTicketDetails(name, className) {
             const key = name.toLowerCase() + '_' + className.toLowerCase();
@@ -320,6 +344,52 @@
             if (event.target == ticketModal) {
                 hideModal();
             }
+        }
+        
+        // New function to send names to WhatsApp
+        function sendWhatsAppMessage() {
+            const phoneNumber = '+201227047648';
+            
+            if (selectedNamesSet.size === 0) {
+                const messageBox = document.getElementById('messageBox');
+                messageBox.textContent = "Please select at least one person to send a message.";
+                messageBox.classList.remove('hidden');
+                return;
+            }
+
+            // Get the names and classes of the selected users
+            const selectedUsersWithClasses = allData
+                .filter(user => selectedNamesSet.has(user.name))
+                .map(user => `${user.name} (${user.class})`);
+
+            // Join them into a single message string without a header
+            const message = selectedUsersWithClasses.join('\n');
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+            
+            window.open(whatsappUrl, '_blank');
+        }
+
+        function toggleWhatsAppButton() {
+            if (selectedNamesSet.size > 0) {
+                whatsappButtonContainer.style.display = 'flex';
+            } else {
+                whatsappButtonContainer.style.display = 'none';
+            }
+        }
+
+        function handleCheckboxChange(event) {
+            const checkbox = event.target;
+            const name = checkbox.value;
+            const row = checkbox.closest('tr');
+
+            if (checkbox.checked) {
+                selectedNamesSet.add(name);
+                row.classList.add('selected-row');
+            } else {
+                selectedNamesSet.delete(name);
+                row.classList.remove('selected-row');
+            }
+            toggleWhatsAppButton();
         }
 
         async function fetchData() {
@@ -640,22 +710,27 @@
             let actorsCount = 0;
             let attendanceValues = [];
 
-            // Render Choir Table
-            if (choirData.length === 0) {
-                choirTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-500">No results found.</td></tr>`;
-            } else {
-                choirData.forEach(item => {
+            const renderRows = (tableBody, items) => {
+                if (items.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-500">No results found.</td></tr>`;
+                    return;
+                }
+                items.forEach(item => {
                     const row = document.createElement('tr');
                     
                     const isQualified = (item.year === '2' && item.attendance >= 9) || (item.year === '3' && item.attendance >= 7);
                     const isPaid = item.paidTo !== 'No';
+                    const isSelected = selectedNamesSet.has(item.name);
 
-                    if (isQualified) {
+                    if (isQualified || item.isPreQualified) {
                         row.classList.add('highlight-qualified');
                     }
                     if (isPaid) {
                         row.classList.add('highlight-paid-row');
                     }
+                    if (isSelected) {
+                        row.classList.add('selected-row');
+                    }
                     
                     let ticketsCellContent = '';
                     if (item.tshirtSize && !item.tickets) {
@@ -665,60 +740,35 @@
                     }
                     
                     const tshirtSizeCellContent = item.tshirtSize || '';
-                    
-                    // Conditionally set paidTo content to be empty if it's "No"
                     const paidToContent = item.paidTo === 'No' ? '' : item.paidTo;
                     
-                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${paidToContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
-                    choirTableBody.appendChild(row);
+                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6"><input type="checkbox" value="${item.name}" ${isSelected ? 'checked' : ''}></td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${paidToContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
+                    tableBody.appendChild(row);
 
-                    attendanceValues.push(item.attendance);
-                    if (item.year === '3' && item.attendance >= 7) {
-                        year3Users7PlusCount++;
-                    }
-                    if (item.year === '2' && item.attendance >= 9) {
-                        year2Users9PlusCount++;
-                    }
-                });
-            }
-
-            // Render Actors Table
-            if (actorsData.length === 0) {
-                actorsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-500">No results found.</td></tr>`;
-            } else {
-                actorsData.forEach(item => {
-                    const row = document.createElement('tr');
+                    // Add a listener to the newly created checkbox
+                    const checkbox = row.querySelector('input[type="checkbox"]');
+                    checkbox.addEventListener('change', handleCheckboxChange);
                     
-                    // All actors are highlighted in green as requested
-                    row.classList.add('highlight-qualified');
-
-                    // Check if actor has paid
-                    const isPaid = item.paidTo !== 'No';
-                    if (isPaid) {
-                         row.classList.add('highlight-paid-row');
-                    }
-                    
-                    let ticketsCellContent = '';
-                    if (item.tshirtSize && !item.tickets) {
-                        ticketsCellContent = '0';
-                    } else if (item.tickets > 0) {
-                        ticketsCellContent = `<span class="cursor-pointer text-blue-500 hover:underline" onclick="showTicketDetails('${item.name}', '${item.class}')">${item.tickets}</span>`;
-                    }
-
-                    const tshirtSizeCellContent = item.tshirtSize || '';
-                    actorsCount++;
-                    
-                    // Conditionally set paidTo content to be empty if it's "No"
-                    const paidToContent = item.paidTo === 'No' ? '' : item.paidTo;
-
-                    row.innerHTML = `<td class="py-2 px-4 sm:py-4 sm:px-6">${item.name}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.attendance}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${ticketsCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${paidToContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${tshirtSizeCellContent}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.class}</td><td class="py-2 px-4 sm:py-4 sm:px-6">${item.year}</td>`;
-                    actorsTableBody.appendChild(row);
-
                     attendanceValues.push(item.attendance);
                 });
-            }
+            };
 
-            // Update stats based on the full filtered data
+            renderRows(choirTableBody, choirData);
+            renderRows(actorsTableBody, actorsData);
+            
+            // Recalculate stats based on the full filtered data
+            choirData.forEach(item => {
+                if (item.year === '3' && item.attendance >= 7) {
+                    year3Users7PlusCount++;
+                }
+                if (item.year === '2' && item.attendance >= 9) {
+                    year2Users9PlusCount++;
+                }
+            });
+            actorsData.forEach(item => {
+                actorsCount++;
+            });
+
             const sortedValues = data.map(item => item.attendance).sort((a, b) => a - b);
             const middle = Math.floor(sortedValues.length / 2);
             let median;
@@ -810,7 +860,8 @@
 
             renderTable(filteredData);
             renderChart(filteredData);
-            renderTshirtCard(filteredData); // Pass the filtered data to the t-shirt card function
+            renderTshirtCard(filteredData);
+            toggleWhatsAppButton();
         }
 
         (async () => {
@@ -828,7 +879,6 @@
             yearFilter.addEventListener('change', filterData);
         })();
     </script>
-
 </body>
 
 </html>
