@@ -718,7 +718,7 @@
                 items.forEach(item => {
                     const row = document.createElement('tr');
                     
-                    const isQualified = (item.year === '2' && item.attendance >= 9) || (item.year === '3' && item.attendance >= 7);
+                    const isQualified = (item.year === '2' && item.attendance >= 8) || (item.year === '3' && item.attendance >= 6);
                     const isPaid = item.paidTo !== 'No';
                     const isSelected = selectedNamesSet.has(item.name);
 
