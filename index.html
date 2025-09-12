@@ -129,12 +129,12 @@
             </div>
             <!-- Year 3 with 7+ Attendance Card -->
             <div class="bg-green-50 p-4 sm:p-6 rounded-xl shadow-sm text-center">
-                <p class="text-lg sm:text-xl font-medium text-green-600">Year 3 (7+ Attendance)</p>
+                <p class="text-lg sm:text-xl font-medium text-green-600">Year 3 (6+ Attendance)</p>
                 <p id="usersCountSpan" class="text-3xl sm:text-4xl font-bold text-green-800 mt-1 sm:mt-2">0</p>
             </div>
             <!-- Year 2 with 9+ Attendance Card -->
             <div class="bg-purple-50 p-4 sm:p-6 rounded-xl shadow-sm text-center">
-                <p class="text-lg sm:text-xl font-medium text-purple-600">Year 2 (9+ Attendance)</p>
+                <p class="text-lg sm:text-xl font-medium text-purple-600">Year 2 (8+ Attendance)</p>
                 <p id="users9PlusCountSpan" class="text-3xl sm:text-4xl font-bold text-purple-800 mt-1 sm:mt-2">0</p>
             </div>
             <!-- Actors Count Card -->
@@ -758,10 +758,10 @@
             
             // Recalculate stats based on the full filtered data
             choirData.forEach(item => {
-                if (item.year === '3' && item.attendance >= 7) {
+                if (item.year === '3' && item.attendance >= 6) {
                     year3Users7PlusCount++;
                 }
-                if (item.year === '2' && item.attendance >= 9) {
+                if (item.year === '2' && item.attendance >= 8) {
                     year2Users9PlusCount++;
                 }
             });
